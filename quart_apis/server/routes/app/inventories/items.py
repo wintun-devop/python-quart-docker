@@ -1,23 +1,37 @@
 from quart import jsonify,make_response,request
+from sqlalchemy.exc import SQLAlchemyError,IntegrityError
+import uuid
+from pydantic import ValidationError
+
+
 from . import items_bp
+from server.services.products_services import item_create
+from server.models.db import get_write_session
+from server.schema.items_schema import ProductRead,ProductCreate
+
 
 
 @items_bp.route("/",methods=['POST'])
 async def create_item():
     try:
         req_body = await request.get_json()
-        response = dict(req_body)
-        return await make_response(jsonify(response),201)
-    # except IntegrityError as e:
-    #     print("e",e)
-    #     # db_session.rollback()
-    #     error = {"status": "fail", "message": "Product already exist."}
-    #     return await make_response(jsonify(error), 400) 
-    # except SQLAlchemyError as e:
-    #     print("ee",e)
-    #     db_session.rollback()
-    #     error={"status":"fail","message":"internal server error"}
-    #     return await make_response(jsonify(error), 500)
+        validate_body = ProductCreate.model_validate(req_body)
+        data = {**validate_body.model_dump(),"id":str(uuid.uuid4())}
+        async for session in get_write_session():
+            product = await item_create(session, data)
+            return await make_response(jsonify(ProductRead.model_validate(product).model_dump(mode="json")), 201)
+    except IntegrityError as e:
+        print("e",e)
+        session.rollback()
+        error = {"status": "error", "message": "Product already exist."}
+        return await make_response(jsonify(error), 400) 
+    except SQLAlchemyError as e:
+        print("ee",e)
+        session.rollback()
+        error={"status":"fail","message":"internal server error"}
+        return await make_response(jsonify(error), 500)
+    except ValidationError as e:
+        return await make_response(jsonify({"error": e.errors()}), 400)
     except Exception as e:
         print("eee",e)
         # db_session.rollback()

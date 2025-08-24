@@ -20,6 +20,14 @@ pip install quart quart-cors quart_jwt_extended
 ```
 pip install quart-bcrypt
 ```
+### database
+```
+pip install asyncpg sqlalchemy[asyncio]
+```
+### Shcema Model for data Validation
+```
+pip install pydantic
+```
 ### quart run with default port number 5000
 ```
 quart run --reload
