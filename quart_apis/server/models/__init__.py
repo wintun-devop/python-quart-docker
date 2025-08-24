@@ -5,15 +5,14 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import mapped_column
 from typing import List
-import datetime
-from server.utils.cuid import cuid
+import datetime,uuid
 
 class Base(AsyncAttrs,DeclarativeBase):
     pass
 
 class Product(Base):
     __tablename__ = "esm_inventory"
-    id:Mapped[str] = mapped_column(Text,primary_key=True, default=cuid)
+    id:Mapped[str] = mapped_column(Text,primary_key=True, default=uuid.uuid4)
     name:Mapped[str] = mapped_column(Text,nullable=False)
     model_no:Mapped[str] = mapped_column(String,nullable=False, unique=True)
     price:Mapped[float] = mapped_column(Float,nullable=True,default=0)
