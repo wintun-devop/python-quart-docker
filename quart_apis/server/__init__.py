@@ -14,6 +14,11 @@ from . import server_config
 #declare bcrypt global instance
 bcrypt = Bcrypt()
 
+#import blue print
+from server.routes.default import servertest_bp
+from server.routes.app.inventories.items import items_bp
+from server.routes.app.inventories.categories import categories_bp
+
 
 def app_instance():
     app = Quart(__name__)
@@ -34,7 +39,10 @@ def app_instance():
     # explanation: http://www.redotheweb.com/2015/11/09/api-security.html
     app.config["JWT_COOKIE_CSRF_PROTECT"] = False
     JWTManager(app)
-    #database config
     #bcrypt hasing
     bcrypt.init_app(app)
+    # register blueprint
+    app.register_blueprint(servertest_bp)
+    app.register_blueprint(items_bp)
+    app.register_blueprint(categories_bp)
     return app
