@@ -10,7 +10,7 @@ import datetime,uuid
 class Base(AsyncAttrs,DeclarativeBase):
     pass
 
-class Product(Base):
+class Inventory(Base):
     __tablename__ = "esm_inventory"
     id:Mapped[str] = mapped_column(Text,primary_key=True, default=uuid.uuid4)
     name:Mapped[str] = mapped_column(Text,nullable=False)

@@ -16,9 +16,12 @@ bcrypt = Bcrypt()
 
 #import blue print
 from server.routes.default import servertest_bp
-from server.routes.app.inventories.items import items_bp
-from server.routes.app.inventories.categories import categories_bp
+# importing inventory blueprints
+from server.routes.app.inventories import (items_bp,categories_bp)
 
+
+# List of blueprints
+blue_prints = [servertest_bp, items_bp, categories_bp]
 
 def app_instance():
     app = Quart(__name__)
@@ -41,8 +44,10 @@ def app_instance():
     JWTManager(app)
     #bcrypt hasing
     bcrypt.init_app(app)
-    # register blueprint
-    app.register_blueprint(servertest_bp)
-    app.register_blueprint(items_bp)
-    app.register_blueprint(categories_bp)
+    """ register blueprint """
+    for blue_print in blue_prints:
+        app.register_blueprint(blue_print)
+    # app.register_blueprint(servertest_bp)
+    # app.register_blueprint(items_bp)
+    # app.register_blueprint(categories_bp)
     return app
