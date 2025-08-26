@@ -1,6 +1,7 @@
-from quart import jsonify,make_response,request
-from . import categories_bp
+from quart import jsonify,make_response,request,Blueprint
+from server.resources.api_paths import CATEGORIES_API_PATH
 
+categories_bp = Blueprint('categories',__name__,url_prefix=CATEGORIES_API_PATH)
 
 @categories_bp.route("/",methods=['POST'])
 async def create_category():
