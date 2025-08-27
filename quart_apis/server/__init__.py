@@ -14,14 +14,21 @@ from . import server_config
 #declare bcrypt global instance
 bcrypt = Bcrypt()
 
-#import blue print
+#import blue prints
 from server.routes.default import servertest_bp
-# importing inventory blueprints
 from server.routes.app.inventories import (items_bp,categories_bp)
+from server.routes.auth import (register_bp,login_bp)
 
 
 # List of blueprints
-blue_prints = [servertest_bp, items_bp, categories_bp]
+blue_prints = [
+               servertest_bp, 
+               items_bp, 
+               categories_bp,
+               register_bp,
+               login_bp
+               ]
+
 
 def app_instance():
     app = Quart(__name__)
@@ -47,7 +54,4 @@ def app_instance():
     """ register blueprint """
     for blue_print in blue_prints:
         app.register_blueprint(blue_print)
-    # app.register_blueprint(servertest_bp)
-    # app.register_blueprint(items_bp)
-    # app.register_blueprint(categories_bp)
     return app

@@ -26,7 +26,7 @@ pip install asyncpg sqlalchemy[asyncio]
 ```
 ### Shcema Model for data Validation
 ```
-pip install pydantic
+pip install "pydantic[email]"
 ```
 ### quart run with default port number 5000
 ```
