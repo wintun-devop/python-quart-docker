@@ -1,7 +1,6 @@
 from quart import jsonify,make_response,Blueprint,request
 from pydantic import ValidationError
-#import bcrypt
-from server import bcrypt
+from server.utils.hash import check_password
 
 
 #jwt function import
@@ -19,7 +18,9 @@ from quart_jwt_extended import (
 from server.resources.api_paths import USER_LOGIN
 
 from server.schema.users_schema import UserCreate,UserRead,UserUpdate
-
+from server.models.db import get_read_session
+from server.services.users_services import user_get_by_email,user_get_one
+from server.utils.hash import check_password
 
 #declare blue print
 login_bp = Blueprint('login',__name__,url_prefix=USER_LOGIN)
@@ -29,9 +30,30 @@ async def login():
         req_body = await request.get_json()
         validate_body = UserCreate.model_validate(req_body)
         validate_values = validate_body.model_dump()
-        username = validate_values["username"]
-        password = validate_values["password"]
-        return await make_response(jsonify({}),200)
+        async for session in get_read_session():
+            user = await user_get_by_email(session,validate_values["email"])
+            if not user:
+                return await make_response(jsonify({"error": "user or password incorrect."}), 400)
+            token_attribute = { 
+                "id":user.id,
+                "username":user.username
+                }
+            password = user.password
+            is_password_true=await check_password(validate_values["password"],password)
+            if not is_password_true:
+                return await make_response(jsonify({"error": "user or password incorrect."}), 400)
+            access_token = create_access_token(identity=token_attribute,fresh=True)
+            refresh_token = create_refresh_token(identity=token_attribute)
+            resp = await make_response(jsonify({
+                **token_attribute,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "auth":True
+            }), 200)
+            # Important: pass the Response object as the first arg
+            set_access_cookies(resp, access_token)
+            set_refresh_cookies(resp, refresh_token)
+            return resp
     except ValidationError as e:
         return await make_response(jsonify({"error": e.errors()}), 400)
     except Exception as e:

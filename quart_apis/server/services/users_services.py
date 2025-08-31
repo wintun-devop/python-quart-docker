@@ -37,6 +37,10 @@ async def user_delete(session: AsyncSession, id: str) -> bool:
     return True
 
 
-async def item_get_all(session: AsyncSession) -> list[User]:
+async def user_get_all(session: AsyncSession) -> list[User]:
     result = await session.execute(select(User))
     return result.scalars().all()
+
+async def user_get_by_email(session:AsyncSession,email:str)->User | None:
+    result = await session.execute(select(User).where(User.email == email))
+    return result.scalar_one_or_none()

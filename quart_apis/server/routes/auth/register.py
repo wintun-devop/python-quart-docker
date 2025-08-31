@@ -1,9 +1,15 @@
+import uuid
 from quart import jsonify,make_response,Blueprint,request
 from pydantic import ValidationError
 
-#import bcrypt
-from server import bcrypt
 
+
+from server.utils.hash import hash_password
+from server.models.db import get_write_session
+from server.utils.unique_string import unique_string
+from server.resources.api_paths import USER_REGISER
+from server.schema.users_schema import UserCreate,UserRead,UserUpdate,UserCustomRead
+from server.services.users_services import user_create
 
 #jwt function import
 from quart_jwt_extended import (
@@ -17,8 +23,7 @@ from quart_jwt_extended import (
                                 get_jwt_identity
                                 )
 
-from server.resources.api_paths import USER_REGISER
-from server.schema.users_schema import UserCreate,UserRead,UserUpdate
+
 
 #declare blue print
 register_bp = Blueprint('register',__name__,url_prefix=USER_REGISER)
@@ -28,10 +33,16 @@ async def create_user():
         req_body = await request.get_json()
         validate_body = UserCreate.model_validate(req_body)
         validate_values = validate_body.model_dump()
-        username = validate_values["username"]
-        password = validate_values["password"]
-        hash_password = bcrypt.generate_password_hash(password).decode("utf-8")
-        return await make_response(jsonify({"pass":hash_password}),201)
+        hash_pass =await hash_password(validate_values["password"])
+        data = {
+            "id":str(uuid.uuid4()),
+            "email":validate_values["email"],
+            "password":hash_pass,
+            "username":unique_string("usr")
+        }
+        async for session in get_write_session():
+            user = await user_create(session, data)
+            return await make_response(jsonify(UserCustomRead.model_validate(user).model_dump(mode="json")), 201)
     except ValidationError as e:
         return await make_response(jsonify({"error": e.errors()}), 400)
     except Exception as e:

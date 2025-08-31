@@ -16,7 +16,7 @@ class User(Base):
     id:Mapped[str] = mapped_column(Text,primary_key=True, default=uuid.uuid4)
     username:Mapped[str] = mapped_column(String,nullable=False,unique=True)
     email:Mapped[str] = mapped_column(String,nullable=False,unique=True)
-    passsword:Mapped[str] = mapped_column(String,nullable=False,unique=True)
+    password:Mapped[str] = mapped_column(String,nullable=False,unique=True)
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
 
