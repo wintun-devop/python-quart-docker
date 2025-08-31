@@ -17,9 +17,27 @@ class User(Base):
     username:Mapped[str] = mapped_column(String,nullable=False,unique=True)
     email:Mapped[str] = mapped_column(String,nullable=False,unique=True)
     password:Mapped[str] = mapped_column(String,nullable=False,unique=True)
+    role:Mapped[str] = mapped_column(String,nullable=True,default="user")
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    # 1–1 with UserAttribute
+    attribute: Mapped["UserAttribute"] = relationship(
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
+class UserAttribute(Base):
+    __tablename__ = "esm_user_attributes"
+    id:Mapped[str] = mapped_column(Text,primary_key=True, default=uuid.uuid4)
+    profile_url = mapped_column(Text,nullable=True,default="default.png")
+    display_name = mapped_column(Text,nullable=True,default="USER")
+    #one_to_one relation with User
+    user_id: Mapped[str] = mapped_column(
+        Text, ForeignKey("esm_users.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
 
 class Inventory(Base):
     __tablename__ = "esm_inventory"
@@ -30,3 +48,40 @@ class Inventory(Base):
     qty:Mapped[int] = mapped_column(Integer,nullable=True,default=0)
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    # 1–many with OrderedItems (each OrderedItem points to one Inventory)
+    ordered_items: Mapped[list["OrderedItems"]] = relationship(
+        back_populates="inventory",
+        cascade="all, delete-orphan",
+    )
+
+class Order(Base):
+    __tablename__ = "esm_orders"
+    id:Mapped[str] = mapped_column(Text,primary_key=True, default=uuid.uuid4)
+    status:Mapped[str] = mapped_column(String,primary_key=True,default="panding")
+    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    # 1–many with OrderedItems
+    # items: Mapped[list["OrderedItems"]] = relationship(
+    #     back_populates="order",
+    #     cascade="all, delete-orphan",
+    #     passive_deletes=True,
+    # )
+    
+class OrderedItems(Base):
+    __tablename__ = "esm_ordered_items"
+    id:Mapped[str] = mapped_column(Text,primary_key=True, default=uuid.uuid4)
+    order_qty :Mapped[int] = mapped_column(Integer,nullable=True,default=0)
+    # order_id: Mapped[str] = mapped_column(
+    #     Text, ForeignKey("esm_orders.id", ondelete="CASCADE"), nullable=False
+    # )
+    item_id: Mapped[str] = mapped_column(
+        Text, ForeignKey("esm_inventory.id", ondelete="RESTRICT"), nullable=False
+    )
+    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    # order: Mapped["Order"] = relationship(back_populates="items")
+    inventory: Mapped["Inventory"] = relationship(back_populates="ordered_items")
+
+
+
+
