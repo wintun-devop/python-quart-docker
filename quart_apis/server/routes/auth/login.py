@@ -29,7 +29,7 @@ async def login():
         req_body = await request.get_json()
         validate_body = UserCreate.model_validate(req_body)
         validate_values = validate_body.model_dump()
-        email = validate_values["email"]
+        username = validate_values["username"]
         password = validate_values["password"]
         return await make_response(jsonify({}),200)
     except ValidationError as e:

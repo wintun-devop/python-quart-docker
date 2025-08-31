@@ -28,7 +28,7 @@ async def create_user():
         req_body = await request.get_json()
         validate_body = UserCreate.model_validate(req_body)
         validate_values = validate_body.model_dump()
-        email = validate_values["email"]
+        username = validate_values["username"]
         password = validate_values["password"]
         hash_password = bcrypt.generate_password_hash(password).decode("utf-8")
         return await make_response(jsonify({"pass":hash_password}),201)
