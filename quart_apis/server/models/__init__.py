@@ -10,6 +10,17 @@ import datetime,uuid
 class Base(AsyncAttrs,DeclarativeBase):
     pass
 
+
+class User(Base):
+    __tablename__ = "esm_users"
+    id:Mapped[str] = mapped_column(Text,primary_key=True, default=uuid.uuid4)
+    username:Mapped[str] = mapped_column(String,nullable=False,unique=True)
+    email:Mapped[str] = mapped_column(String,nullable=False,unique=True)
+    password:Mapped[str] = mapped_column(String,nullable=False,unique=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+
+
 class Inventory(Base):
     __tablename__ = "esm_inventory"
     id:Mapped[str] = mapped_column(Text,primary_key=True, default=uuid.uuid4)

@@ -17,3 +17,14 @@ class UserRead(UserCreate):
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
     password: str | None = None
+
+class UserCustomRead(BaseModel):
+    id: str
+    username: str
+    email: EmailStr
+    created_at: datetime
+    updated_at: datetime | None
+    
+    class Config:
+        from_attributes = True
+    

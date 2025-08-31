@@ -17,7 +17,7 @@ bcrypt = Bcrypt()
 #import blue prints
 from server.routes.default import servertest_bp
 from server.routes.app.inventories import (items_bp,categories_bp)
-from server.routes.auth import (register_bp,login_bp)
+from server.routes.auth import (register_bp,login_bp,logout_bp)
 
 
 # List of blueprints
@@ -26,7 +26,8 @@ blue_prints = [
                items_bp, 
                categories_bp,
                register_bp,
-               login_bp
+               login_bp,
+               logout_bp
                ]
 
 
@@ -45,6 +46,9 @@ def app_instance():
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=10)  # Adjust as needed
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=10)  # Adjust as needed
     app.config['JWT_REFRESH_TOKEN_ENABLED'] = True
+    app.config['JWT_TOKEN_LOCATION'] = ["cookies"]
+    app.config['JWT_COOKIE_SECURE'] = True
+
     # Enable csrf double submit protection. See this for a thorough
     # explanation: http://www.redotheweb.com/2015/11/09/api-security.html
     app.config["JWT_COOKIE_CSRF_PROTECT"] = False
@@ -55,3 +59,5 @@ def app_instance():
     for blue_print in blue_prints:
         app.register_blueprint(blue_print)
     return app
+
+

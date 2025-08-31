@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from server.models import Inventory
 from sqlalchemy import select
+
+from server.models import Inventory
 
 
 
