@@ -22,6 +22,7 @@ class UserCustomRead(BaseModel):
     id: str
     username: str
     email: EmailStr
+    role: str
     created_at: datetime
     updated_at: datetime | None
     
