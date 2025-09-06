@@ -36,13 +36,13 @@ class User(Base):
     )
     #1-many with Order
     orders: Mapped[list["Order"]] = relationship(
-        back_populates="order",
+        back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
     #1-many with Carts
     carts: Mapped[list["Cart"]] = relationship(
-        back_populates="cart",
+        back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
@@ -58,6 +58,11 @@ class UserAttribute(Base):
     )
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    """ 1_to_1 with User """
+    user: Mapped["User"] = relationship(
+        back_populates="attribute",
+        uselist=False
+    )
     
 
 class Inventory(Base):
@@ -90,6 +95,7 @@ class Order(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
     user: Mapped["User"] = relationship(back_populates="orders")
+    cart: Mapped["Cart"] = relationship(back_populates="order_card")
     
 
 class Cart(Base):
@@ -102,13 +108,13 @@ class Cart(Base):
     user: Mapped["User"] = relationship(back_populates="carts")
     # 1–many with OrderedItems
     items: Mapped[list["OrderedItems"]] = relationship(
-        back_populates="order",
+        back_populates="cart",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
     # 1–1 with Order
     order_card: Mapped["Order"] = relationship(
-        back_populates="order_card",
+        back_populates="cart",
         uselist=False,
         cascade="all, delete-orphan",
     )
