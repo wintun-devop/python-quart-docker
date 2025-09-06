@@ -4,7 +4,8 @@ from pydantic import ValidationError
 
 
 
-from server.utils.hash import hash_password
+# from server.utils.hash import hash_password
+from server.utils.argon2_hash import hash_password_argon2
 from server.models.db import get_write_session
 from server.utils.unique_string import unique_string
 from server.resources.api_paths import USER_REGISER
@@ -33,10 +34,11 @@ async def create_user():
         validate_body = UserCreate.model_validate(req_body)
         validate_values = validate_body.model_dump()
         # hash_pass =await hash_password(validate_values["password"])
+        hash_pass =await hash_password_argon2(validate_values["password"])
         data = {
             "id":str(uuid.uuid4()),
             "email":validate_values["email"],
-            "password":hash_password(validate_values["password"]),
+            "password":hash_pass,
             "username":unique_string("usr")
         }
         async for session in get_write_session():

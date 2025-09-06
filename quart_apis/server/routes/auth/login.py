@@ -1,6 +1,5 @@
 from quart import jsonify,make_response,Blueprint,request
 from pydantic import ValidationError
-from server.utils.hash import check_password
 
 
 #jwt function import
@@ -20,7 +19,9 @@ from server.resources.api_paths import USER_LOGIN
 from server.schema.users_schema import UserCreate,UserRead,UserUpdate
 from server.models.db import get_read_session
 from server.services.users_services import user_get_by_email,user_get_one
-from server.utils.hash import check_password
+# from server.utils.hash import check_password
+from server.utils.argon2_hash import verify_password_argon2
+
 
 #declare blue print
 login_bp = Blueprint('login',__name__,url_prefix=USER_LOGIN)
@@ -38,8 +39,8 @@ async def login():
                 "id":user.id,
                 "username":user.username
                 }
-            password = user.password
-            is_password_true= check_password(validate_values["password"],password)
+            hash_password = user.password
+            is_password_true= await verify_password_argon2(hash_password,validate_values["password"])
             if not is_password_true:
                 return await make_response(jsonify({"error": "user or password incorrect."}), 400)
             access_token = create_access_token(identity=token_attribute,fresh=True)
