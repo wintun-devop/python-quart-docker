@@ -39,7 +39,7 @@ async def login():
                 "username":user.username
                 }
             password = user.password
-            is_password_true=await check_password(validate_values["password"],password)
+            is_password_true= check_password(validate_values["password"],password)
             if not is_password_true:
                 return await make_response(jsonify({"error": "user or password incorrect."}), 400)
             access_token = create_access_token(identity=token_attribute,fresh=True)

@@ -24,7 +24,6 @@ from quart_jwt_extended import (
                                 )
 
 
-
 #declare blue print
 register_bp = Blueprint('register',__name__,url_prefix=USER_REGISER)
 @register_bp.route("/",methods=['POST'])
@@ -33,11 +32,11 @@ async def create_user():
         req_body = await request.get_json()
         validate_body = UserCreate.model_validate(req_body)
         validate_values = validate_body.model_dump()
-        hash_pass =await hash_password(validate_values["password"])
+        # hash_pass =await hash_password(validate_values["password"])
         data = {
             "id":str(uuid.uuid4()),
             "email":validate_values["email"],
-            "password":hash_pass,
+            "password":hash_password(validate_values["password"]),
             "username":unique_string("usr")
         }
         async for session in get_write_session():

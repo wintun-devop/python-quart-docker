@@ -13,8 +13,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import mapped_column
-from typing import List
-import datetime,uuid
+import datetime
 
 class Base(AsyncAttrs,DeclarativeBase):
     pass
@@ -37,8 +36,14 @@ class User(Base):
     )
     #1-many with Order
     orders: Mapped[list["Order"]] = relationship(
-         back_populates="order",
-         cascade="all, delete-orphan",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    #1-many with Carts
+    carts: Mapped[list["Cart"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
 
@@ -53,6 +58,11 @@ class UserAttribute(Base):
     )
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    """ 1_to_1 with User """
+    user: Mapped["User"] = relationship(
+        back_populates="attribute",
+        uselist=False
+    )
     
 
 class Inventory(Base):
@@ -70,38 +80,62 @@ class Inventory(Base):
         cascade="all, delete-orphan",
     )
 
+
 class Order(Base):
     __tablename__ = "esm_orders"
     id:Mapped[str] = mapped_column(Text,primary_key=True)
+    # panding,confimed,shipped
     status:Mapped[str] = mapped_column(String,default="panding")
     user_id:Mapped[str]=mapped_column(
         Text,ForeignKey("esm_users.id",ondelete="RESTRICT"),nullable=False
     )
+    cart_id:Mapped[str] = mapped_column(
+        Text, ForeignKey("esm_carts.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
-    user: Mapped["User"] = relationship(back_populates="orders",)
+    user: Mapped["User"] = relationship(back_populates="orders")
+    cart: Mapped["Cart"] = relationship(back_populates="order_card")
+    
+
+class Cart(Base):
+    __tablename__ = "esm_carts"
+    id:Mapped[str] = mapped_column(Text,primary_key=True)
+    user_id:Mapped[str] = mapped_column(
+        Text, ForeignKey("esm_users.id", ondelete="CASCADE"), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    user: Mapped["User"] = relationship(back_populates="carts")
     # 1–many with OrderedItems
     items: Mapped[list["OrderedItems"]] = relationship(
-        back_populates="order",
+        back_populates="cart",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    # 1–1 with Order
+    order_card: Mapped["Order"] = relationship(
+        back_populates="cart",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
     
 class OrderedItems(Base):
     __tablename__ = "esm_ordered_items"
     __table_args__ = (
-        UniqueConstraint("order_id", "item_id", name="uq_order_item"),
+        UniqueConstraint("cart_id", "item_id", name="uq_order_item"),
     )
     id:Mapped[str] = mapped_column(Text,primary_key=True)
-    order_qty :Mapped[int] = mapped_column(Integer,nullable=True,default=0)
-    order_id: Mapped[str] = mapped_column(
-        Text, ForeignKey("esm_orders.id", ondelete="CASCADE"), nullable=False)
+    order_qty :Mapped[int] = mapped_column(Integer,nullable=False)
+    current_price:Mapped[float] = mapped_column(Float,nullable=False)
+    cart_id: Mapped[str] = mapped_column(
+        Text, ForeignKey("esm_carts.id", ondelete="CASCADE"), nullable=False)
     item_id: Mapped[str] = mapped_column(
         Text, ForeignKey("esm_inventory.id", ondelete="RESTRICT"), nullable=False
     )
     created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
-    order: Mapped["Order"] = relationship(back_populates="items")
+    cart: Mapped["Cart"] = relationship(back_populates="items")
     inventory: Mapped["Inventory"] = relationship(back_populates="ordered_items")
 
 
