@@ -18,6 +18,7 @@ db_host_read=os.getenv("DB_HOST_READ")
 
 #API Base Path
 api_base_path=os.getenv("API_BASE_PATH")
+server_path =os.path.dirname(os.path.abspath(__file__))
 
 
 # DATABASE_LINK=f"postgresql://db_user:db_password@db_host/db_name"
