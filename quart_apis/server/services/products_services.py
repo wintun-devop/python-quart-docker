@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 
 from server.models import Inventory
 
@@ -40,4 +41,35 @@ async def item_delete(session: AsyncSession, id: str) -> bool:
 async def item_get_all(session: AsyncSession) -> list[Inventory]:
     result = await session.execute(select(Inventory))
     return result.scalars().all()
+
+#upsert base on id
+async def item_upsert(session: AsyncSession, data: dict) -> Inventory:
+    stmt = insert(Inventory).values(**data)
+    # Define conflict target and update logic
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["id"],  
+        set_={key: value for key, value in data.items() if key != "id"}
+    )
+    await session.execute(stmt)
+    await session.commit()
+    # Optionally fetch the updated row
+    result = await session.execute(
+        select(Inventory).where(Inventory.id == data["id"])
+    )
+    return result.scalar_one()
+
+
+async def item_upsert_many(session: AsyncSession, data: list[dict]) -> list[dict]:
+    results = []
+    # ensures transactional integrity
+    async with session.begin():  
+        for item in data:
+            stmt = insert(Inventory).values(**item)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["model"],  # adjust to your unique constraint
+                set_={key: value for key, value in item.items() if key != "model"}
+            )
+            result = await session.execute(stmt)
+            results.append(result.scalar_one())
+    return results
 

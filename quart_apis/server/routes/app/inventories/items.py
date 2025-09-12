@@ -4,6 +4,7 @@ import uuid
 from pydantic import ValidationError
 
 
+
 from server.models.db import get_write_session
 from server.models.db import get_read_session
 from server.schema.items_schema import InventoryCreate,InventoryRead,InventoryUpdate
@@ -15,6 +16,8 @@ from server.services.products_services import (
                                                item_update,
                                                item_delete
                                                )
+from server.server_config import server_path
+from server.utils.unique_string import unique_string
 
 
 from server.resources.api_paths import ITEMS_API_PATH
@@ -107,3 +110,26 @@ async def get_all_items():
         print("eee",e)
         error = {"status": "fail", "message": "An unexpected error occurred"}
         return await make_response(jsonify(error), 500)
+
+
+@items_bp.route("/upload",methods=['POST'])
+async def upload_product():
+    try:
+        file = (await request.files).get("image")  
+        if file and file.filename:
+            # Check file type
+            if file.content_type not in ["image/jpeg", "image/png","image/jpg"]:
+                return {"error": "Unsupported file type"}, 400
+            # Save or process the image
+            suffix = (file.content_type).split("/")[-1]
+            current_path =server_path    
+            file_name = f"{unique_string("item_",20)}.{suffix}"
+            save_path = f"{current_path}/statics/{file_name}"
+            await file.save(str(save_path))
+        return await make_response(jsonify({"statu":"success","file_name":file_name}), 200)
+    except Exception as e:
+        print("error",e)
+        error = {"status": "fail", "message": "An unexpected error occurred"}
+        return await make_response(jsonify(error), 500)
+
+
