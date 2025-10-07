@@ -28,6 +28,10 @@ pip install asyncpg sqlalchemy[asyncio]
 ```
 pip install "pydantic[email]"
 ```
+- swagger ui for documentation
+```
+pip install quart-schema
+```
 ### quart run with default port number 5000
 ```
 quart run --reload
