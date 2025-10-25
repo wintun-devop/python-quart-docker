@@ -1,5 +1,6 @@
 from quart import jsonify,make_response,Blueprint,request
 from pydantic import ValidationError
+from quart_schema import validate_request, validate_response
 
 
 #jwt function import
@@ -26,23 +27,23 @@ from server.utils.argon2_hash import verify_password_argon2
 #declare blue print
 login_bp = Blueprint('login',__name__,url_prefix=USER_LOGIN)
 @login_bp.route("/",methods=['POST'])
-async def login():
+@validate_request(UserCreate)
+# @validate_response(UserCustomRead,201)
+async def login(data:UserCreate):
     try:
-        req_body = await request.get_json()
-        validate_body = UserCreate.model_validate(req_body)
-        validate_values = validate_body.model_dump()
         async for session in get_read_session():
-            user = await user_get_by_email(session,validate_values["email"])
+            user = await user_get_by_email(session,data.email)
             if not user:
-                return await make_response(jsonify({"error": "user or password incorrect."}), 400)
+                return jsonify({"error": "user or password incorrect."}), 400
             token_attribute = { 
                 "id":user.id,
                 "username":user.username
                 }
             hash_password = user.password
-            is_password_true= await verify_password_argon2(hash_password,validate_values["password"])
-            if not is_password_true:
-                return await make_response(jsonify({"error": "user or password incorrect."}), 400)
+            print("hash",hash_password)
+            vertify_password = await verify_password_argon2(hash_password,data.password)
+            if not vertify_password["ok"]:
+                return jsonify({"error": "user or password incorrect."}), 400
             access_token = create_access_token(identity=token_attribute,fresh=True)
             refresh_token = create_refresh_token(identity=token_attribute)
             resp = await make_response(jsonify({
@@ -55,10 +56,7 @@ async def login():
             set_access_cookies(resp, access_token)
             set_refresh_cookies(resp, refresh_token)
             return resp
-    except ValidationError as e:
-        return await make_response(jsonify({"error": e.errors()}), 400)
     except Exception as e:
         print("eee",e)
-        # db_session.rollback()
         error = {"status": "fail", "msg": "An unexpected error occurred"}
         return await make_response(jsonify(error), 500)

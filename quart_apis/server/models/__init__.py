@@ -5,14 +5,15 @@ from sqlalchemy import (
                         Float, 
                         Text,
                         ForeignKey,
-                        func,
-                        UniqueConstraint
+                        UniqueConstraint,
+                        DateTime
                         )
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import mapped_column
+from datetime import timezone
 import datetime
 
 class Base(AsyncAttrs,DeclarativeBase):
@@ -26,8 +27,8 @@ class User(Base):
     email:Mapped[str] = mapped_column(String,nullable=False,unique=True)
     password:Mapped[str] = mapped_column(String,nullable=False)
     role:Mapped[str] = mapped_column(String,nullable=True,default="user")
-    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    createdAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc))
+    updatedAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc), onupdate=datetime.datetime.now(timezone.utc))
     # 1–1 with UserAttribute
     attribute: Mapped["UserAttribute"] = relationship(
         back_populates="user",
@@ -56,8 +57,8 @@ class UserAttribute(Base):
     user_id: Mapped[str] = mapped_column(
         Text, ForeignKey("esm_users.id", ondelete="CASCADE"), unique=True, nullable=False
     )
-    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    createdAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc))
+    updatedAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc), onupdate=datetime.datetime.now(timezone.utc))
     """ 1_to_1 with User """
     user: Mapped["User"] = relationship(
         back_populates="attribute",
@@ -72,8 +73,8 @@ class Inventory(Base):
     model_no:Mapped[str] = mapped_column(String,nullable=False, unique=True)
     price:Mapped[float] = mapped_column(Float,nullable=True,default=0)
     qty:Mapped[int] = mapped_column(Integer,nullable=True,default=0)
-    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    createdAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc))
+    updatedAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc), onupdate=datetime.datetime.now(timezone.utc))
     # 1–many with OrderedItems (each OrderedItem points to one Inventory)
     ordered_items: Mapped[list["OrderedItems"]] = relationship(
         back_populates="inventory",
@@ -92,8 +93,8 @@ class Order(Base):
     cart_id:Mapped[str] = mapped_column(
         Text, ForeignKey("esm_carts.id", ondelete="CASCADE"), unique=True, nullable=False
     )
-    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    createdAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc))
+    updatedAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc), onupdate=datetime.datetime.now(timezone.utc))
     user: Mapped["User"] = relationship(back_populates="orders")
     cart: Mapped["Cart"] = relationship(back_populates="order_card")
     
@@ -103,8 +104,8 @@ class Cart(Base):
     id:Mapped[str] = mapped_column(Text,primary_key=True)
     user_id:Mapped[str] = mapped_column(
         Text, ForeignKey("esm_users.id", ondelete="CASCADE"), nullable=False)
-    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    createdAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc))
+    updatedAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc), onupdate=datetime.datetime.now(timezone.utc))
     user: Mapped["User"] = relationship(back_populates="carts")
     # 1–many with OrderedItems
     items: Mapped[list["OrderedItems"]] = relationship(
@@ -133,8 +134,8 @@ class OrderedItems(Base):
     item_id: Mapped[str] = mapped_column(
         Text, ForeignKey("esm_inventory.id", ondelete="RESTRICT"), nullable=False
     )
-    created_at: Mapped[datetime.datetime] = mapped_column(default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(default=func.now(),onupdate=func.now())
+    createdAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc))
+    updatedAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now(timezone.utc), onupdate=datetime.datetime.now(timezone.utc))
     cart: Mapped["Cart"] = relationship(back_populates="items")
     inventory: Mapped["Inventory"] = relationship(back_populates="ordered_items")
 

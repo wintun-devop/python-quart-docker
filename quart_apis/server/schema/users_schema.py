@@ -8,8 +8,8 @@ class UserCreate(BaseModel):
 class UserRead(UserCreate):
     id: str
     username: str
-    created_at: datetime
-    updated_at: datetime | None
+    createdAt: datetime
+    updatedAt: datetime | None
 
     class Config:
         from_attributes = True
@@ -23,8 +23,8 @@ class UserCustomRead(BaseModel):
     username: str
     email: EmailStr
     role: str
-    created_at: datetime
-    updated_at: datetime | None
+    createdAt: datetime
+    updatedAt: datetime | None
     
     class Config:
         from_attributes = True

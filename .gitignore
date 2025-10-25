@@ -52,5 +52,5 @@ __pycache__/
 *.sln
 *.sw?
 
-#ignoring alembic
-*alembic.ini
+#alembic.ini ignore
+alembic.ini
