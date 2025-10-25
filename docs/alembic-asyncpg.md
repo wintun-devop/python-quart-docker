@@ -60,7 +60,7 @@ else:
 ```
 ### Generate Model
 ```
-alembic revision --autogenerate -m "initial user model"
+alembic revision --autogenerate -m "make_migrate_1"
 ```
 ### Make Migration
 ```
