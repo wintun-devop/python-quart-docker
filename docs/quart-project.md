@@ -37,8 +37,13 @@ pip install quart-schema
 quart run --reload
 ```
 ### quart run with specific port number 8000
+- run only on localhost
 ```
 quart run --port 8000 --reload 
+```
+- run on 0.0.0.0
+```
+quart run --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### create api step-by-step
