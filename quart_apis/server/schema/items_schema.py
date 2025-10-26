@@ -9,8 +9,8 @@ class InventoryCreate(BaseModel):
 
 class InventoryRead(InventoryCreate):
     id: str
-    created_at: datetime
-    updated_at: datetime | None
+    createdAt: datetime
+    updatedAt: datetime | None
 
     class Config:
         from_attributes = True
