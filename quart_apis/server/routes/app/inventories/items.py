@@ -2,6 +2,8 @@ from quart import jsonify,make_response,request,Blueprint
 from sqlalchemy.exc import SQLAlchemyError,IntegrityError
 import uuid
 from pydantic import ValidationError
+from quart_schema import validate_request, validate_response
+from typing import List
 
 
 
@@ -24,65 +26,78 @@ from server.resources.api_paths import ITEMS_API_PATH
 items_bp = Blueprint('items',__name__,url_prefix=ITEMS_API_PATH)
 
 @items_bp.route("/",methods=['POST'])
-async def create_item():
+@validate_request(InventoryCreate)
+@validate_response(InventoryRead,201)
+async def create_item(data:InventoryCreate):
     try:
-        req_body = await request.get_json()
-        validate_body = InventoryCreate.model_validate(req_body)
-        data = {**validate_body.model_dump(),"id":str(uuid.uuid4())}
+        payload = {
+            "name":data.name,
+            "model_no":data.model_no,
+            "price": data.price,
+            "qty": data.qty,
+            "id":str(uuid.uuid4())
+        }
         async for session in get_write_session():
-            item = await item_create(session, data)
-            return await make_response(jsonify(InventoryRead.model_validate(item).model_dump(mode="json")), 201)
+            item = await item_create(session, payload)
+            resp = InventoryRead.model_validate(item).model_dump(mode="json")
+            return resp, 201
     except IntegrityError as e:
-        print("e",e)
+        print("sql_error",e)
         session.rollback()
         error = {"status": "error", "message": "Product already exist."}
-        return await make_response(jsonify(error), 400) 
+        return error,400
     except SQLAlchemyError as e:
         print("ee",e)
         session.rollback()
         error={"status":"fail","message":"internal server error"}
-        return await make_response(jsonify(error), 500)
-    except ValidationError as e:
-        return await make_response(jsonify({"error": e.errors()}), 400)
+        return error, 500
     except Exception as e:
         print("eee",e)
         # db_session.rollback()
         error = {"status": "fail", "message": "An unexpected error occurred"}
-        return await make_response(jsonify(error), 500)
+        return error, 500
     
 
 @items_bp.route('/<id>',methods=["GET"])
+@validate_response(InventoryRead,200)
 async def get_item(id):
     try:
         async for session in get_read_session():
             item = await item_get_one(session,id)
             if not item:
-                return await make_response(jsonify({"error": "Item not found"}), 404)
-            return await make_response(jsonify(InventoryRead.model_validate(item).model_dump(mode="json")), 200)
+                return {"error": "Item not found"}, 404
+            resp = InventoryRead.model_validate(item).model_dump(mode="json")
+            return resp,200
     except Exception as e:
         print("eee",e)
         # db_session.rollback()
         error = {"status": "fail", "message": "An unexpected error occurred"}
         return await make_response(jsonify(error), 500)
-    
 
-@items_bp.route('/<id>',methods=["PUT"])
-async def update_item(id):
+
+@items_bp.route('/<id>', methods=["PUT"])
+@validate_request(InventoryUpdate)
+@validate_response(InventoryRead, 200)
+async def update_item(id: str, data: InventoryUpdate):
     try:
-        req_body = await request.get_json()
-        validated = InventoryUpdate.model_validate(req_body)
         async for session in get_write_session():
-            updated = await item_update(session, id, validated.model_dump(exclude_unset=True))
+            updated = await item_update(session, id, data.model_dump(exclude_unset=True))
             if not updated:
-                return await make_response(jsonify({"error": "Item not found"}), 404)
-            return await make_response(jsonify(InventoryRead.model_validate(updated).model_dump(mode="json")), 200)
-    except ValidationError as e:
-        return await make_response(jsonify({"error": e.errors()}), 400)
+                return {"error": "Item not found"}, 404
+            resp = InventoryRead.model_validate(updated).model_dump(mode="json")
+            return resp, 200
+    except IntegrityError as e:
+        print("sql_error", e)
+        session.rollback()
+        return {"status": "error", "message": "Integrity error during update."}, 400
+    except SQLAlchemyError as e:
+        print("sqlalchemy_error", e)
+        session.rollback()
+        return {"status": "fail", "message": "Database error during update."}, 500
     except Exception as e:
-        print("eee",e)
-        # db_session.rollback()
-        error = {"status": "fail", "message": "An unexpected error occurred"}
-        return await make_response(jsonify(error), 500)
+        print("unexpected_error", e)
+        return {"status": "fail", "message": "An unexpected error occurred."}, 500
+
     
 
 @items_bp.route('/<id>',methods=["DELETE"])
@@ -100,12 +115,13 @@ async def delete_item(id):
     
 
 @items_bp.route('/',methods=["GET"])
+@validate_response(List[InventoryRead],200)
 async def get_all_items():
     try:
         async for session in get_read_session():
             items = await item_get_all(session)
             response = [InventoryRead.model_validate(item).model_dump(mode="json") for item in items]
-            return await make_response(jsonify(response), 200)
+            return response, 200
     except Exception as e:
         print("eee",e)
         error = {"status": "fail", "message": "An unexpected error occurred"}
